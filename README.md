@@ -47,7 +47,7 @@ repo sync -j4
  - Note that the `--nousepkg` flag is required to combat `./build_packages` being lazy to pull pre-built binaries and cause build error.
 
 ### 4. Convert the Chromium OS image to VMDK
-Assuming the build went file and now you have `chromiumos_test_image.bin` file. There is this `convert_to_vmware.sh` script in this repository that does the conversion for you. Execute the script to see help.
+Assuming the build went well and now you have the `chromiumos_test_image.bin` file. There is this `convert_to_vmware.sh` script in this repository that does the conversion for you. Execute the script to see help.
 
 ### 5. Additional notes on using the VMDK file to create VMWare virtual machine
  - We have only tested VMWare Workstation 15 & Fusion 11, lower versions of VMWare clients may not work.
