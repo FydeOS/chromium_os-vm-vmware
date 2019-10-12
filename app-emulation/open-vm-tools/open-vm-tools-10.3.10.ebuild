@@ -71,6 +71,8 @@ PATCHES=(
 	"${FILESDIR}/10.1.0-Werror.patch"
 )
 
+AM_OPTS="-i"
+
 pkg_setup() {
 	local CONFIG_CHECK="~VMWARE_BALLOON ~VMWARE_PVSCSI ~VMXNET3"
 	use X && CONFIG_CHECK+=" ~DRM_VMWGFX"
@@ -88,6 +90,7 @@ src_prepare() {
 src_configure() {
 	local myeconfargs=(
 		--without-root-privileges
+    --without-kernel-modules
 		$(use_enable multimon)
 		$(use_with X x)
 		$(use_with X gtk3)

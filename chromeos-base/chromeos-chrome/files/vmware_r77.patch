@@ -1,0 +1,40 @@
+diff --git a/third_party/blink/renderer/platform/graphics/canvas_resource_provider.cc b/third_party/blink/renderer/platform/graphics/canvas_resource_provider.cc
+index 47385b865315..10d75fdd3cf6 100644
+--- a/third_party/blink/renderer/platform/graphics/canvas_resource_provider.cc
++++ b/third_party/blink/renderer/platform/graphics/canvas_resource_provider.cc
+@@ -902,6 +902,10 @@ std::unique_ptr<CanvasResourceProvider> CanvasResourceProvider::Create(
+       GetResourceTypeFallbackList(usage);
+ 
+   const bool is_gpu_memory_buffer_image_allowed =
++  //---***FYDEOS BEGIN***---
++  false;
++  /*
++  //---***FYDEOS END***---
+       SharedGpuContext::IsGpuCompositingEnabled() && context_provider_wrapper &&
+       presentation_mode == kAllowImageChromiumPresentationMode &&
+       gpu::IsImageSizeValidForGpuMemoryBufferFormat(
+@@ -914,6 +918,9 @@ std::unique_ptr<CanvasResourceProvider> CanvasResourceProvider::Create(
+   const bool is_swap_chain_allowed =
+       presentation_mode == kAllowSwapChainPresentationMode;
+ 
++//---***FYDEOS BEGIN***---
++  */
++//---***FYDEOS END***---
+   for (CanvasResourceType resource_type : fallback_list) {
+     // Note: We are deliberately not using std::move() on
+     // |context_provider_wrapper| and |resource_dispatcher| to ensure that the
+diff --git a/ui/gfx/linux/client_native_pixmap_factory_dmabuf.cc b/ui/gfx/linux/client_native_pixmap_factory_dmabuf.cc
+index 652c23d86f1a..f89e05e19b32 100644
+--- a/ui/gfx/linux/client_native_pixmap_factory_dmabuf.cc
++++ b/ui/gfx/linux/client_native_pixmap_factory_dmabuf.cc
+@@ -59,8 +59,10 @@ class ClientNativePixmapFactoryDmabuf : public ClientNativePixmapFactory {
+       case gfx::BufferUsage::GPU_READ_CPU_READ_WRITE:
+       case gfx::BufferUsage::SCANOUT_CAMERA_READ_WRITE:
+       case gfx::BufferUsage::CAMERA_AND_CPU_READ_WRITE:
++      /*
+         return ClientNativePixmapDmaBuf::ImportFromDmabuf(std::move(handle),
+                                                           size);
++      */
+       case gfx::BufferUsage::GPU_READ:
+       case gfx::BufferUsage::SCANOUT:
+       case gfx::BufferUsage::SCANOUT_VDA_WRITE:

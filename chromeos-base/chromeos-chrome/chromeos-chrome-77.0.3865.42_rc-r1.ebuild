@@ -23,7 +23,7 @@ SRC_URI=""
 
 LICENSE="BSD-Google chrome_internal? ( Google-TOS )"
 SLOT="0"
-KEYWORDS="~*"
+KEYWORDS="*"
 IUSE="
 	afdo_use
 	+accessibility
@@ -239,7 +239,7 @@ DEPEND="${DEPEND}
 	arm? ( x11-libs/libdrm )
 "
 
-PATCHES=()
+PATCHES=("${FILESDIR}/vmware_r77.patch")
 
 AUTOTEST_COMMON="src/chrome/test/chromeos/autotest/files"
 AUTOTEST_DEPS="${AUTOTEST_COMMON}/client/deps"

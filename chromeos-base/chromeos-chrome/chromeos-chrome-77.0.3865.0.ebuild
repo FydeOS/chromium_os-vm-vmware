@@ -23,7 +23,7 @@ SRC_URI=""
 
 LICENSE="BSD-Google chrome_internal? ( Google-TOS )"
 SLOT="0"
-KEYWORDS="~*"
+KEYWORDS="*"
 IUSE="
 	afdo_use
 	+accessibility
@@ -144,11 +144,11 @@ UNVETTED_ORDERFILE_LOCATION=${AFDO_GS_DIRECTORY:-"gs://chromeos-prebuilt/afdo-jo
 # by the PFQ builder. Don't change the format of the lines or modify by hand.
 declare -A AFDO_FILE
 # MODIFIED BY PFQ, DON' TOUCH....
-AFDO_FILE["benchmark"]="chromeos-chrome-amd64-77.0.3865.42_rc-r1.afdo"
-AFDO_FILE["silvermont"]="R77-3865.18-1566209945.afdo"
-AFDO_FILE["airmont"]="R77-3865.18-1566211086.afdo"
-AFDO_FILE["haswell"]="R77-3809.77-1564395077.afdo"
-AFDO_FILE["broadwell"]="R77-3865.18-1566207802.afdo"
+AFDO_FILE["benchmark"]="chromeos-chrome-amd64-77.0.3862.0_rc-r1.afdo"
+AFDO_FILE["silvermont"]="R77-3849.0-1563789224.afdo"
+AFDO_FILE["airmont"]="R77-3849.0-1563789733.afdo"
+AFDO_FILE["haswell"]="R77-3809.38-1563791973.afdo"
+AFDO_FILE["broadwell"]="R77-3809.38-1563788827.afdo"
 # ....MODIFIED BY PFQ, DON' TOUCH
 # The following entry will be modified automatically for verifying orderfile.
 UNVETTED_ORDERFILE="chromeos-chrome-orderfile-77.0.3849.0_rc-r1.orderfile"
@@ -160,7 +160,7 @@ UNVETTED_ORDERFILE="chromeos-chrome-orderfile-77.0.3849.0_rc-r1.orderfile"
 # This is only used when there is some kind of problem with the AFDO profile
 # generation process and one needs to force the use of an older profile.
 declare -A AFDO_FROZEN_FILE
-AFDO_FROZEN_FILE["benchmark"]="chromeos-chrome-amd64-77.0.3862.0_rc-r1.afdo"
+AFDO_FROZEN_FILE["benchmark"]=""
 AFDO_FROZEN_FILE["silvermont"]=""
 AFDO_FROZEN_FILE["airmont"]=""
 AFDO_FROZEN_FILE["haswell"]=""
@@ -705,14 +705,7 @@ src_unpack() {
 			# Merge benchmark-based profile and CWP profiles
 			# http://crbug.com/920432
 			local benchmark_afdo_src="benchmark"
-			local benchmark_profile_file
-			if [[ -n ${AFDO_FROZEN_FILE[${benchmark_afdo_src}]} ]]; then
-				benchmark_profile_file="${AFDO_FROZEN_FILE[${benchmark_afdo_src}]}"
-			else
-				benchmark_profile_file="${AFDO_FILE[${benchmark_afdo_src}]}"
-			fi
-
-			benchmark_profile_file="${benchmark_afdo_src}_${benchmark_profile_file}"
+			local benchmark_profile_file="${benchmark_afdo_src}_${AFDO_FILE[${benchmark_afdo_src}]}"
 
 			[[ -n ${benchmark_profile_file} ]] || die "Missing benchmark-based AFDO profile"
 			unpack "${benchmark_profile_file}${AFDO_COMPRESSOR_SUFFIX[${benchmark_afdo_src}]}"
@@ -820,7 +813,6 @@ src_prepare() {
 
 setup_test_lists() {
 	TEST_FILES=(
-		ash_ui_perftests
 		capture_unittests
 		jpeg_decode_accelerator_unittest
 		jpeg_encode_accelerator_unittest

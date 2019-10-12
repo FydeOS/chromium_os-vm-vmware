@@ -1,1 +1,4 @@
->media-libs/mesa-18.2_pre1
+media-libs/mesa::chromiumos
+media-libs/minigbm::chromiumos
+sys-kernel/chromeos-kernel-4_19::chromiumos
+chromeos-base/chromeos-chrome::chromiumos

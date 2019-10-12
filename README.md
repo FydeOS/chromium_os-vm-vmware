@@ -36,11 +36,12 @@ repo sync -j4
    - This requires a `.local_mounts` file in your `~/trunk/src/scripts` per [here](https://www.chromium.org/chromium-os/tips-and-tricks-for-chromium-os-developers#TOC-How-to-share-files-for-inside-and-outside-chroot).
  - Edit `~/trunk/src/third_party/chromiumos-overlay/eclass/cros-board.eclass` and add `amd64-generic_vmware` to the list. Pay attention to the dash and underscore in the board name, try not to mis-spell.
 
-### 3. Setup board and start building
+### 3. Setup board, prepare the host environment and start building
  - Per the bible, now you can do:
    ```
    (inside) export BOARD=amd64-generic_vmware
    (inside) setup_board --board=${BOARD}
+   (inside) sudo ~/trunk/src/overlays/overlay-variant-amd64-generic-vmware/prepare_host_env.sh
    (inside) ./build_packages --board=${BOARD} --nousepkg
    (inside) ./build_image --board=${BOARD} --noenable_rootfs_verification test
    ```
