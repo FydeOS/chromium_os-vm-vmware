@@ -1,5 +1,5 @@
 diff --git a/third_party/blink/renderer/platform/graphics/canvas_resource_provider.cc b/third_party/blink/renderer/platform/graphics/canvas_resource_provider.cc
-index 47385b865315..10d75fdd3cf6 100644
+index 47385b865315..8fb04dba71a8 100644
 --- a/third_party/blink/renderer/platform/graphics/canvas_resource_provider.cc
 +++ b/third_party/blink/renderer/platform/graphics/canvas_resource_provider.cc
 @@ -902,6 +902,10 @@ std::unique_ptr<CanvasResourceProvider> CanvasResourceProvider::Create(
@@ -13,13 +13,17 @@ index 47385b865315..10d75fdd3cf6 100644
        SharedGpuContext::IsGpuCompositingEnabled() && context_provider_wrapper &&
        presentation_mode == kAllowImageChromiumPresentationMode &&
        gpu::IsImageSizeValidForGpuMemoryBufferFormat(
-@@ -914,6 +918,9 @@ std::unique_ptr<CanvasResourceProvider> CanvasResourceProvider::Create(
-   const bool is_swap_chain_allowed =
-       presentation_mode == kAllowSwapChainPresentationMode;
+@@ -911,9 +915,12 @@ std::unique_ptr<CanvasResourceProvider> CanvasResourceProvider::Create(
+           context_provider_wrapper->ContextProvider()->GetCapabilities());
  
+   // TODO(ashithasantosh): Include checks for capabilities, format and size.
++
 +//---***FYDEOS BEGIN***---
 +  */
 +//---***FYDEOS END***---
+   const bool is_swap_chain_allowed =
+       presentation_mode == kAllowSwapChainPresentationMode;
+-
    for (CanvasResourceType resource_type : fallback_list) {
      // Note: We are deliberately not using std::move() on
      // |context_provider_wrapper| and |resource_dispatcher| to ensure that the
