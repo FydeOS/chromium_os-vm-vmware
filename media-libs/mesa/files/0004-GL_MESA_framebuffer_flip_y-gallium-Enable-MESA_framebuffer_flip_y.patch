@@ -1,0 +1,74 @@
+From ca3dd1356efce1aea16ada65eb6aaf77523ca7f1 Mon Sep 17 00:00:00 2001
+From: Fritz Koenig <frkoenig@google.com>
+Date: Tue, 30 Jul 2019 14:40:33 -0700
+Subject: [PATCH 4/5] gallium: Enable MESA_framebuffer_flip_y
+
+Reviewed-by: Kenneth Graunke <kenneth@whitecape.org>
+Reviewed-by: Kristian H. Kristensen <hoegsberg@google.com>
+---
+ src/mesa/state_tracker/st_atom_stipple.c | 2 +-
+ src/mesa/state_tracker/st_cb_fbo.c       | 5 +----
+ src/mesa/state_tracker/st_context.h      | 2 +-
+ src/mesa/state_tracker/st_extensions.c   | 1 +
+ 4 files changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/src/mesa/state_tracker/st_atom_stipple.c b/src/mesa/state_tracker/st_atom_stipple.c
+index 87599f94d50..3437553c154 100644
+--- a/src/mesa/state_tracker/st_atom_stipple.c
++++ b/src/mesa/state_tracker/st_atom_stipple.c
+@@ -74,7 +74,7 @@ st_update_polygon_stipple( struct st_context *st )
+ 
+       memcpy(st->state.poly_stipple, ctx->PolygonStipple, sz);
+ 
+-      if (_mesa_is_user_fbo(ctx->DrawBuffer)) {
++      if (ctx->DrawBuffer->FlipY) {
+          memcpy(newStipple.stipple, ctx->PolygonStipple, sizeof(newStipple.stipple));
+       } else {
+          invert_stipple(newStipple.stipple, ctx->PolygonStipple,
+diff --git a/src/mesa/state_tracker/st_cb_fbo.c b/src/mesa/state_tracker/st_cb_fbo.c
+index 3bd7fd4ad27..cd79c0be1db 100644
+--- a/src/mesa/state_tracker/st_cb_fbo.c
++++ b/src/mesa/state_tracker/st_cb_fbo.c
+@@ -857,13 +857,10 @@ st_MapRenderbuffer(struct gl_context *ctx,
+    struct st_context *st = st_context(ctx);
+    struct st_renderbuffer *strb = st_renderbuffer(rb);
+    struct pipe_context *pipe = st->pipe;
+-   const GLboolean invert = rb->Name == 0;
++   const GLboolean invert = flip_y;
+    GLuint y2;
+    GLubyte *map;
+ 
+-   /* driver does not support GL_FRAMEBUFFER_FLIP_Y_MESA */
+-   assert((rb->Name == 0) == flip_y);
+-
+    if (strb->software) {
+       /* software-allocated renderbuffer (probably an accum buffer) */
+       if (strb->data) {
+diff --git a/src/mesa/state_tracker/st_context.h b/src/mesa/state_tracker/st_context.h
+index 324a7f24178..323747c2802 100644
+--- a/src/mesa/state_tracker/st_context.h
++++ b/src/mesa/state_tracker/st_context.h
+@@ -369,7 +369,7 @@ st_invalidate_readpix_cache(struct st_context *st)
+ static inline GLuint
+ st_fb_orientation(const struct gl_framebuffer *fb)
+ {
+-   if (fb && _mesa_is_winsys_fbo(fb)) {
++   if (fb && fb->FlipY) {
+       /* Drawing into a window (on-screen buffer).
+        *
+        * Negate Y scale to flip image vertically.
+diff --git a/src/mesa/state_tracker/st_extensions.c b/src/mesa/state_tracker/st_extensions.c
+index 528e6b74a54..f583ce389e8 100644
+--- a/src/mesa/state_tracker/st_extensions.c
++++ b/src/mesa/state_tracker/st_extensions.c
+@@ -1010,6 +1010,7 @@ void st_init_extensions(struct pipe_screen *screen,
+    extensions->ATI_fragment_shader = GL_TRUE;
+    extensions->ATI_texture_env_combine3 = GL_TRUE;
+ 
++   extensions->MESA_framebuffer_flip_y = GL_TRUE;
+    extensions->MESA_pack_invert = GL_TRUE;
+ 
+    extensions->NV_fog_distance = GL_TRUE;
+-- 
+2.23.0.581.g78d2f28ef7-goog
+

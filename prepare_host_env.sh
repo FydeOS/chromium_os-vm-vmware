@@ -2,6 +2,7 @@
 cur_dir="$(cd "$(dirname $0)" && pwd)"
 overlay_dir="/mnt/host/source/src/third_party/chromiumos-overlay/dev-libs"
 xmlsec_ebuild="${cur_dir}/dev-libs/xmlsec"
+libdnet_ebuild="${cur_dir}/dev-libs/libdnet"
 packages="
   xmlsec
   libtirpc
@@ -18,6 +19,7 @@ check_env() {
 
 prepare_xmlsec() {
   rsync -a $xmlsec_ebuild $overlay_dir
+  rsync -a $libdnet_ebuild $overlay_dir
 }
 
 print_help() {
@@ -44,7 +46,7 @@ main() {
     print_help
   fi 
   prepare_xmlsec
-  USE="-python" buid_packages 
+  USE="-python" PYTHON_TARGETS="python2_7" buid_packages 
   echo "Job is done."
 }
 

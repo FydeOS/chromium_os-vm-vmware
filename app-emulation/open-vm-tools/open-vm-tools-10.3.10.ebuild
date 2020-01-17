@@ -87,6 +87,7 @@ src_prepare() {
 	eautoreconf
 }
 
+EPREFIX=$SYSROOT
 src_configure() {
 	local myeconfargs=(
 		--without-root-privileges
@@ -109,8 +110,7 @@ src_configure() {
 	)
 	# Avoid a bug in configure.ac
 	use ssl || myeconfargs+=( --without-ssl )
-
-	econf "${myeconfargs[@]}"
+	econf_build "${myeconfargs[@]}"
 }
 
 src_install() {

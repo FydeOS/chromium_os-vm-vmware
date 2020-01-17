@@ -46,8 +46,8 @@ for card in ${VIDEO_CARDS}; do
 done
 
 IUSE="${IUSE_VIDEO_CARDS}
-	+classic debug dri drm egl +gallium -gbm gles1 gles2 llvm +nptl pic
-	selinux shared-glapi kernel_FreeBSD vulkan wayland xlib-glx X"
+	+classic debug dri drm egl +gallium -gbm gles1 gles2 kernel_FreeBSD
+	kvm_guest llvm +nptl pic selinux shared-glapi vulkan wayland xlib-glx X"
 
 LIBDRM_DEPSTRING=">=x11-libs/libdrm-2.4.60"
 
@@ -73,7 +73,6 @@ RDEPEND="
 "
 
 DEPEND="${RDEPEND}
-	=dev-lang/python-2*
 	dev-libs/libxml2
 	sys-devel/bison
 	sys-devel/flex
@@ -103,14 +102,6 @@ src_prepare() {
 			configure.ac || die
 	fi
 
-	epatch "${FILESDIR}"/18.3-intel-limit-urb-size-for-SKL-KBL-CFL-GT1.patch
-	# Don't apply intel BGRA internal format patch for VM build since BGRA_EXT is not a valid
-	# internal format for GL context.
-	if use !video_cards_virgl ; then
-		epatch "${FILESDIR}"/DOWNSTREAM-i965-Use-GL_BGRA_EXT-internal-format-for-B8G8R8A8-B8.patch
-	fi
-	epatch "${FILESDIR}"/intel-Add-support-for-Comet-Lake.patch
-
 	# Produce a dummy git_sha1.h file because .git will not be copied to portage tmp directory
 	echo '#define MESA_GIT_SHA1 "git-0000000"' > src/git_sha1.h
 	default
@@ -119,13 +110,10 @@ src_prepare() {
 src_configure() {
 	tc-getPROG PKG_CONFIG pkg-config
 
-	# Needs std=gnu++11 to build with libc++. crbug.com/750831
-	append-cxxflags "-std=gnu++11"
-
 	# For llvmpipe on ARM we'll get errors about being unable to resolve
 	# "__aeabi_unwind_cpp_pr1" if we don't include this flag; seems wise
 	# to include it for all platforms though.
-	use video_cards_llvmpipe && append-flags "-rtlib=libgcc"
+	use video_cards_llvmpipe && append-flags "-rtlib=libgcc -shared-libgcc"
 
 	if use !gallium && use !classic && use !vulkan; then
 		ewarn "You enabled neither classic, gallium, nor vulkan "
@@ -185,14 +173,25 @@ src_configure() {
 		fi
 	fi
 
+	if use X; then
+		glx="dri"
+	else
+		glx="disabled"
+	fi
+
 	append-flags "-UENABLE_SHADER_CACHE"
 
+	if use kvm_guest; then
+		emesonargs+=( -Ddri-search-path=/opt/google/cros-containers/lib )
+	fi
+
 	emesonargs+=(
-		-Dglx=disabled
+		-Dglx="${glx}"
 		-Dllvm="${LLVM_ENABLE}"
 		-Dplatforms="${egl_platforms}"
 		$(meson_use egl)
 		$(meson_use gbm)
+		$(meson_use X gl)
 		$(meson_use gles1)
 		$(meson_use gles2)
 		$(meson_use selinux)

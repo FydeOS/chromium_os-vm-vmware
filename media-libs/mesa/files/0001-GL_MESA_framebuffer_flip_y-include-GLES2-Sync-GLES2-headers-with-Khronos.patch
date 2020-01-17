@@ -1,0 +1,135 @@
+From a09ee21d476a64033fed13f1473119eb3b6d9ce3 Mon Sep 17 00:00:00 2001
+From: Fritz Koenig <frkoenig@google.com>
+Date: Mon, 7 Oct 2019 11:33:59 -0700
+Subject: [PATCH 1/5] include/GLES2: Sync GLES2 headers with Khronos
+
+Bring in glFramebufferParameteriMESA/glGetFramebufferParameterivMESA
+
+Reviewed-by: Kristian H. Kristensen <hoegsberg@google.com>
+---
+ include/GLES2/gl2.h    |  2 +-
+ include/GLES2/gl2ext.h | 74 +++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 74 insertions(+), 2 deletions(-)
+
+diff --git a/include/GLES2/gl2.h b/include/GLES2/gl2.h
+index b4051e5a7c5..bd5034a14bc 100644
+--- a/include/GLES2/gl2.h
++++ b/include/GLES2/gl2.h
+@@ -44,7 +44,7 @@ extern "C" {
+ #define GL_GLES_PROTOTYPES 1
+ #endif
+ 
+-/* Generated on date 20180725 */
++/* Generated on date 20190911 */
+ 
+ /* Generated C header for:
+  * API: gles2
+diff --git a/include/GLES2/gl2ext.h b/include/GLES2/gl2ext.h
+index 559173dee45..b68d92366c7 100644
+--- a/include/GLES2/gl2ext.h
++++ b/include/GLES2/gl2ext.h
+@@ -38,7 +38,7 @@ extern "C" {
+ #define GL_APIENTRYP GL_APIENTRY*
+ #endif
+ 
+-/* Generated on date 20180725 */
++/* Generated on date 20190911 */
+ 
+ /* Generated C header for:
+  * API: gles2
+@@ -197,6 +197,22 @@ GL_APICALL void GL_APIENTRY glGetnUniformuivKHR (GLuint program, GLint location,
+ #endif
+ #endif /* GL_KHR_robustness */
+ 
++#ifndef GL_KHR_shader_subgroup
++#define GL_KHR_shader_subgroup 1
++#define GL_SUBGROUP_SIZE_KHR              0x9532
++#define GL_SUBGROUP_SUPPORTED_STAGES_KHR  0x9533
++#define GL_SUBGROUP_SUPPORTED_FEATURES_KHR 0x9534
++#define GL_SUBGROUP_QUAD_ALL_STAGES_KHR   0x9535
++#define GL_SUBGROUP_FEATURE_BASIC_BIT_KHR 0x00000001
++#define GL_SUBGROUP_FEATURE_VOTE_BIT_KHR  0x00000002
++#define GL_SUBGROUP_FEATURE_ARITHMETIC_BIT_KHR 0x00000004
++#define GL_SUBGROUP_FEATURE_BALLOT_BIT_KHR 0x00000008
++#define GL_SUBGROUP_FEATURE_SHUFFLE_BIT_KHR 0x00000010
++#define GL_SUBGROUP_FEATURE_SHUFFLE_RELATIVE_BIT_KHR 0x00000020
++#define GL_SUBGROUP_FEATURE_CLUSTERED_BIT_KHR 0x00000040
++#define GL_SUBGROUP_FEATURE_QUAD_BIT_KHR  0x00000080
++#endif /* GL_KHR_shader_subgroup */
++
+ #ifndef GL_KHR_texture_compression_astc_hdr
+ #define GL_KHR_texture_compression_astc_hdr 1
+ #define GL_COMPRESSED_RGBA_ASTC_4x4_KHR   0x93B0
+@@ -2414,6 +2430,12 @@ GL_APICALL void GL_APIENTRY glGetPerfQueryInfoINTEL (GLuint queryId, GLuint quer
+ #ifndef GL_MESA_framebuffer_flip_y
+ #define GL_MESA_framebuffer_flip_y 1
+ #define GL_FRAMEBUFFER_FLIP_Y_MESA        0x8BBB
++typedef void (GL_APIENTRYP PFNGLFRAMEBUFFERPARAMETERIMESAPROC) (GLenum target, GLenum pname, GLint param);
++typedef void (GL_APIENTRYP PFNGLGETFRAMEBUFFERPARAMETERIVMESAPROC) (GLenum target, GLenum pname, GLint *params);
++#ifdef GL_GLEXT_PROTOTYPES
++GL_APICALL void GL_APIENTRY glFramebufferParameteriMESA (GLenum target, GLenum pname, GLint param);
++GL_APICALL void GL_APIENTRY glGetFramebufferParameterivMESA (GLenum target, GLenum pname, GLint *params);
++#endif
+ #endif /* GL_MESA_framebuffer_flip_y */
+ 
+ #ifndef GL_MESA_program_binary_formats
+@@ -3352,6 +3374,56 @@ GL_APICALL void GL_APIENTRY glResolveDepthValuesNV (void);
+ #define GL_NV_shader_noperspective_interpolation 1
+ #endif /* GL_NV_shader_noperspective_interpolation */
+ 
++#ifndef GL_NV_shader_subgroup_partitioned
++#define GL_NV_shader_subgroup_partitioned 1
++#define GL_SUBGROUP_FEATURE_PARTITIONED_BIT_NV 0x00000100
++#endif /* GL_NV_shader_subgroup_partitioned */
++
++#ifndef GL_NV_shader_texture_footprint
++#define GL_NV_shader_texture_footprint 1
++#endif /* GL_NV_shader_texture_footprint */
++
++#ifndef GL_NV_shading_rate_image
++#define GL_NV_shading_rate_image 1
++#define GL_SHADING_RATE_IMAGE_NV          0x9563
++#define GL_SHADING_RATE_NO_INVOCATIONS_NV 0x9564
++#define GL_SHADING_RATE_1_INVOCATION_PER_PIXEL_NV 0x9565
++#define GL_SHADING_RATE_1_INVOCATION_PER_1X2_PIXELS_NV 0x9566
++#define GL_SHADING_RATE_1_INVOCATION_PER_2X1_PIXELS_NV 0x9567
++#define GL_SHADING_RATE_1_INVOCATION_PER_2X2_PIXELS_NV 0x9568
++#define GL_SHADING_RATE_1_INVOCATION_PER_2X4_PIXELS_NV 0x9569
++#define GL_SHADING_RATE_1_INVOCATION_PER_4X2_PIXELS_NV 0x956A
++#define GL_SHADING_RATE_1_INVOCATION_PER_4X4_PIXELS_NV 0x956B
++#define GL_SHADING_RATE_2_INVOCATIONS_PER_PIXEL_NV 0x956C
++#define GL_SHADING_RATE_4_INVOCATIONS_PER_PIXEL_NV 0x956D
++#define GL_SHADING_RATE_8_INVOCATIONS_PER_PIXEL_NV 0x956E
++#define GL_SHADING_RATE_16_INVOCATIONS_PER_PIXEL_NV 0x956F
++#define GL_SHADING_RATE_IMAGE_BINDING_NV  0x955B
++#define GL_SHADING_RATE_IMAGE_TEXEL_WIDTH_NV 0x955C
++#define GL_SHADING_RATE_IMAGE_TEXEL_HEIGHT_NV 0x955D
++#define GL_SHADING_RATE_IMAGE_PALETTE_SIZE_NV 0x955E
++#define GL_MAX_COARSE_FRAGMENT_SAMPLES_NV 0x955F
++#define GL_SHADING_RATE_SAMPLE_ORDER_DEFAULT_NV 0x95AE
++#define GL_SHADING_RATE_SAMPLE_ORDER_PIXEL_MAJOR_NV 0x95AF
++#define GL_SHADING_RATE_SAMPLE_ORDER_SAMPLE_MAJOR_NV 0x95B0
++typedef void (GL_APIENTRYP PFNGLBINDSHADINGRATEIMAGENVPROC) (GLuint texture);
++typedef void (GL_APIENTRYP PFNGLGETSHADINGRATEIMAGEPALETTENVPROC) (GLuint viewport, GLuint entry, GLenum *rate);
++typedef void (GL_APIENTRYP PFNGLGETSHADINGRATESAMPLELOCATIONIVNVPROC) (GLenum rate, GLuint samples, GLuint index, GLint *location);
++typedef void (GL_APIENTRYP PFNGLSHADINGRATEIMAGEBARRIERNVPROC) (GLboolean synchronize);
++typedef void (GL_APIENTRYP PFNGLSHADINGRATEIMAGEPALETTENVPROC) (GLuint viewport, GLuint first, GLsizei count, const GLenum *rates);
++typedef void (GL_APIENTRYP PFNGLSHADINGRATESAMPLEORDERNVPROC) (GLenum order);
++typedef void (GL_APIENTRYP PFNGLSHADINGRATESAMPLEORDERCUSTOMNVPROC) (GLenum rate, GLuint samples, const GLint *locations);
++#ifdef GL_GLEXT_PROTOTYPES
++GL_APICALL void GL_APIENTRY glBindShadingRateImageNV (GLuint texture);
++GL_APICALL void GL_APIENTRY glGetShadingRateImagePaletteNV (GLuint viewport, GLuint entry, GLenum *rate);
++GL_APICALL void GL_APIENTRY glGetShadingRateSampleLocationivNV (GLenum rate, GLuint samples, GLuint index, GLint *location);
++GL_APICALL void GL_APIENTRY glShadingRateImageBarrierNV (GLboolean synchronize);
++GL_APICALL void GL_APIENTRY glShadingRateImagePaletteNV (GLuint viewport, GLuint first, GLsizei count, const GLenum *rates);
++GL_APICALL void GL_APIENTRY glShadingRateSampleOrderNV (GLenum order);
++GL_APICALL void GL_APIENTRY glShadingRateSampleOrderCustomNV (GLenum rate, GLuint samples, const GLint *locations);
++#endif
++#endif /* GL_NV_shading_rate_image */
++
+ #ifndef GL_NV_shadow_samplers_array
+ #define GL_NV_shadow_samplers_array 1
+ #define GL_SAMPLER_2D_ARRAY_SHADOW_NV     0x8DC4
+-- 
+2.23.0.581.g78d2f28ef7-goog
+

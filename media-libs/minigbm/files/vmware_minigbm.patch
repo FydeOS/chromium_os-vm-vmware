@@ -1,14 +1,14 @@
 diff --git a/Android.mk b/Android.mk
-index 9169cef..6cfed91 100644
+index 564f416..c177afc 100644
 --- a/Android.mk
 +++ b/Android.mk
-@@ -26,7 +26,8 @@ MINIGBM_SRC := \
+@@ -27,7 +27,8 @@ MINIGBM_SRC := \
  	udl.c \
  	vc4.c \
  	vgem.c \
 -	virtio_gpu.c
 +	virtio_gpu.c \
-+        vmwgfx.c
++  vmwgfx.c
  
  MINIGBM_CPPFLAGS := -std=c++14
  MINIGBM_CFLAGS := \
@@ -27,7 +27,7 @@ index 35f92f2..86c86cc 100644
  CPPFLAGS += $(PC_CFLAGS)
  LDLIBS += $(PC_LIBS)
 diff --git a/drv.c b/drv.c
-index 09f303c..cbe449a 100644
+index 872b5d4..cb40787 100644
 --- a/drv.c
 +++ b/drv.c
 @@ -61,6 +61,9 @@ extern const struct backend backend_udl;
@@ -40,19 +40,63 @@ index 09f303c..cbe449a 100644
  extern const struct backend backend_vgem;
  extern const struct backend backend_virtio_gpu;
  
-@@ -111,8 +114,10 @@ static const struct backend *drv_get_backend(int fd)
+@@ -110,6 +113,9 @@ static const struct backend *drv_get_backend(int fd)
+ 		&backend_udl,
  #ifdef DRV_VC4
  		&backend_vc4,
- #endif
--		&backend_vgem,
--		&backend_virtio_gpu,
-+#ifdef DRV_VMWGFX
-+		&backend_vmwgfx,
 +#endif
-+		&backend_vgem,     &backend_virtio_gpu,
++#ifdef DRV_VMWGFX
++   &backend_vmwgfx,
+ #endif
+ 		&backend_vgem,	   &backend_virtio_gpu,
  	};
+diff --git a/helpers.c b/helpers.c
+index ad8a9f0..850653d 100644
+--- a/helpers.c
++++ b/helpers.c
+@@ -53,14 +53,14 @@ static const struct planar_layout packed_4bpp_layout = {
+ 	.vertical_subsampling = { 1 },
+ 	.bytes_per_pixel = { 4 }
+ };
+-
++/*
+ static const struct planar_layout packed_8bpp_layout = {
+ 	.num_planes = 1,
+ 	.horizontal_subsampling = { 1 },
+ 	.vertical_subsampling = { 1 },
+ 	.bytes_per_pixel = { 8 }
+ };
+-
++*/
+ static const struct planar_layout biplanar_yuv_420_layout = {
+ 	.num_planes = 2,
+ 	.horizontal_subsampling = { 1, 2 },
+@@ -153,10 +153,10 @@ static const struct planar_layout *layout_from_format(uint32_t format)
+ 	case DRM_FORMAT_XRGB2101010:
+ 	case DRM_FORMAT_XRGB8888:
+ 		return &packed_4bpp_layout;
+-
++/*
+ 	case DRM_FORMAT_ABGR16161616F:
+ 		return &packed_8bpp_layout;
+-
++*/
+ 	default:
+ 		drv_log("UNKNOWN FORMAT %d\n", format);
+ 		return NULL;
+diff --git a/i915.c b/i915.c
+index 025b6b5..82e381f 100644
+--- a/i915.c
++++ b/i915.c
+@@ -23,7 +23,7 @@
+ #define I915_CACHELINE_SIZE 64
+ #define I915_CACHELINE_MASK (I915_CACHELINE_SIZE - 1)
  
- 	for (i = 0; i < ARRAY_SIZE(backend_list); i++)
+-static const uint32_t render_target_formats[] = { DRM_FORMAT_ABGR16161616F, DRM_FORMAT_ABGR2101010,
++static const uint32_t render_target_formats[] = { /*DRM_FORMAT_ABGR16161616F,*/ DRM_FORMAT_ABGR2101010,
+ 						  DRM_FORMAT_ABGR8888,	    DRM_FORMAT_ARGB1555,
+ 						  DRM_FORMAT_ARGB2101010,   DRM_FORMAT_ARGB8888,
+ 						  DRM_FORMAT_RGB565,	    DRM_FORMAT_XBGR2101010,
 diff --git a/include/includeCheck.h b/include/includeCheck.h
 new file mode 100644
 index 0000000..8cce7f1
@@ -777,7 +821,7 @@ index 0000000..01b0c59
 +#endif
 diff --git a/vmwgfx.c b/vmwgfx.c
 new file mode 100644
-index 0000000..57415ef
+index 0000000..10c48d1
 --- /dev/null
 +++ b/vmwgfx.c
 @@ -0,0 +1,210 @@
@@ -893,8 +937,8 @@ index 0000000..57415ef
 +		break;
 +	}
 +
-+  bo->total_size = 0;
-+	for (plane = 0; plane < bo->num_planes; plane++) {
++  bo->meta.total_size = 0;
++	for (plane = 0; plane < bo->meta.num_planes; plane++) {
 +    memset(&create_arg, 0, sizeof(create_arg));
 +    req->svga3d_flags = SVGA3D_SURFACE_SCREENTARGET | extra_flag | 
 +        SVGA3D_SURFACE_HINT_RENDERTARGET | SVGA3D_SURFACE_HINT_DYNAMIC;
@@ -916,10 +960,10 @@ index 0000000..57415ef
 +	  }
 +    stride = drv_stride_from_format(format, aligned_width, plane);
 +    bo->handles[plane].u32 = rep->handle;
-+    bo->strides[plane] = subsample_stride(stride, format, plane);
-+    bo->offsets[plane] = 0;
-+    bo->sizes[plane] = rep->backup_size;
-+    bo->total_size += bo->sizes[plane];
++    bo->meta.strides[plane] = subsample_stride(stride, format, plane);
++    bo->meta.offsets[plane] = 0;
++    bo->meta.sizes[plane] = rep->backup_size;
++    bo->meta.total_size += bo->meta.sizes[plane];
 +	}
 +
 +	return 0;
@@ -934,8 +978,8 @@ index 0000000..57415ef
 +  uint64_t modifier = 
 +      drv_pick_modifier(modifiers, count, modifier_order, ARRAY_SIZE(modifier_order));
 +  ret = vmwgfx_bo_create(bo, width, height, format, 0);
-+  for (i = 0; i< bo->num_planes; i++) {
-+    bo->format_modifiers[i] =  modifier; 
++  for (i = 0; i< bo->meta.num_planes; i++) {
++    bo->meta.format_modifiers[i] =  modifier; 
 +  }
 +  return ret;
 +}
@@ -955,14 +999,14 @@ index 0000000..57415ef
 +     drv_log("Error get gb surface reference, ret:%d\n", ret);
 +     return MAP_FAILED;
 +   }
-+   vma->length = bo->total_size;
++   vma->length = bo->meta.total_size;
 +   addr =  mmap(0, vma->length, drv_get_prot(map_flags), MAP_SHARED, bo->drv->fd,
 +                rep->crep.buffer_map_handle);
 +   drv_log("map offset:0x%llx, length:%zu, to addr:%p\n", rep->crep.buffer_map_handle, vma->length, addr);
 +   return addr;
 +}
 +
-+static uint32_t vmwgfx_resolve_format(uint32_t format, uint64_t use_flags)
++static unsigned int vmwgfx_resolve_format(struct driver *drv, unsigned int format, unsigned long use_flags)
 +{
 +  switch (format) {
 +  case DRM_FORMAT_FLEX_IMPLEMENTATION_DEFINED:

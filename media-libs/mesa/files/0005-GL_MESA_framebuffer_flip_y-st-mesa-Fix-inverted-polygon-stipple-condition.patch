@@ -1,0 +1,30 @@
+From 90d312591ca6ede95d7d79a4721ebcf7195a0004 Mon Sep 17 00:00:00 2001
+From: Kenneth Graunke <kenneth@whitecape.org>
+Date: Tue, 8 Oct 2019 15:20:19 -0700
+Subject: [PATCH 5/5] st/mesa: Fix inverted polygon stipple condition
+
+Fixes Piglit's gl-2.1-polygon-stipple-fs on iris.
+
+Fixes: 63f24c3c016 ("gallium: Enable MESA_framebuffer_flip_y")
+Reviewed-by: Fritz Koenig <frkoenig@google.com>
+Reviewed-by: Kristian H. Kristensen <hoegsberg@google.com>
+---
+ src/mesa/state_tracker/st_atom_stipple.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/mesa/state_tracker/st_atom_stipple.c b/src/mesa/state_tracker/st_atom_stipple.c
+index 3437553c154..86a4247f326 100644
+--- a/src/mesa/state_tracker/st_atom_stipple.c
++++ b/src/mesa/state_tracker/st_atom_stipple.c
+@@ -74,7 +74,7 @@ st_update_polygon_stipple( struct st_context *st )
+ 
+       memcpy(st->state.poly_stipple, ctx->PolygonStipple, sz);
+ 
+-      if (ctx->DrawBuffer->FlipY) {
++      if (!ctx->DrawBuffer->FlipY) {
+          memcpy(newStipple.stipple, ctx->PolygonStipple, sizeof(newStipple.stipple));
+       } else {
+          invert_stipple(newStipple.stipple, ctx->PolygonStipple,
+-- 
+2.23.0.581.g78d2f28ef7-goog
+

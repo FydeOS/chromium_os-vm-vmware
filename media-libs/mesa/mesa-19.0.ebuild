@@ -49,8 +49,8 @@ for card in ${VIDEO_CARDS}; do
 done
 
 IUSE="${IUSE_VIDEO_CARDS}
-	+classic debug dri drm egl +gallium -gbm gles1 gles2 llvm +nptl pic
-	selinux shared-glapi kernel_FreeBSD vulkan wayland xlib-glx X"
+	+classic debug dri drm egl +gallium -gbm gles1 gles2 kernel_FreeBSD
+	kvm_guest llvm +nptl pic selinux shared-glapi vulkan wayland xlib-glx X"
 
 LIBDRM_DEPSTRING=">=x11-libs/libdrm-2.4.60"
 
@@ -76,7 +76,6 @@ RDEPEND="
 "
 
 DEPEND="${RDEPEND}
-	=dev-lang/python-2*
 	dev-libs/libxml2
 	sys-devel/bison
 	sys-devel/flex
@@ -106,17 +105,16 @@ src_prepare() {
 			configure.ac || die
 	fi
 
-	epatch "${FILESDIR}"/${P}-patches/18.3-intel-limit-urb-size-for-SKL-KBL-CFL-GT1.patch
-	# Don't apply intel BGRA internal format patch for VM build since BGRA_EXT is not a valid
-	# internal format for GL context.
-	if use !video_cards_virgl && use !video_cards_vmware; then
-		epatch "${FILESDIR}"/${P}-patches/DOWNSTREAM-i965-Use-GL_BGRA_EXT-internal-format-for-B8G8R8A8-B8.patch
-	fi
-    
-    if use video_cards_vmware; then
-        epatch ${FILESDIR}/svga_format.patch
-    fi
-	epatch "${FILESDIR}"/${P}-patches/intel-Add-support-for-Comet-Lake.patch
+	epatch "${FILESDIR}"/18.3-intel-limit-urb-size-for-SKL-KBL-CFL-GT1.patch
+	epatch "${FILESDIR}"/intel-Add-support-for-Comet-Lake.patch
+	epatch "${FILESDIR}"/UPSTREAM-mesa-Expose-EXT_texture_query_lod-and-add-support-fo.patch
+	epatch "${FILESDIR}"/19.0-radeonsi-gfx9-honor-user-stride-for-imported-buffers.patch
+	epatch "${FILESDIR}"/0001-GL_MESA_framebuffer_flip_y-include-GLES2-Sync-GLES2-headers-with-Khronos.patch
+	epatch "${FILESDIR}"/0002-GL_MESA_framebuffer_flip_y-mesa-GetFramebufferParameteriv-spelling.patch
+	epatch "${FILESDIR}"/0003-GL_MESA_framebuffer_flip_y-mesa-Allow-MESA_framebuffer_flip_y-for-GLES-3.patch
+	epatch "${FILESDIR}"/0004-GL_MESA_framebuffer_flip_y-gallium-Enable-MESA_framebuffer_flip_y.patch
+	epatch "${FILESDIR}"/0005-GL_MESA_framebuffer_flip_y-st-mesa-Fix-inverted-polygon-stipple-condition.patch
+  use video_cards_vmware && epatch ${FILESDIR}/svga_format.patch
 
 	default
 }
@@ -124,13 +122,10 @@ src_prepare() {
 src_configure() {
 	tc-getPROG PKG_CONFIG pkg-config
 
-	# Needs std=gnu++11 to build with libc++. crbug.com/750831
-	append-cxxflags "-std=gnu++11"
-
 	# For llvmpipe on ARM we'll get errors about being unable to resolve
 	# "__aeabi_unwind_cpp_pr1" if we don't include this flag; seems wise
 	# to include it for all platforms though.
-	use video_cards_llvmpipe && append-flags "-rtlib=libgcc"
+	use video_cards_llvmpipe && append-flags "-rtlib=libgcc -shared-libgcc"
 
 	if use !gallium && use !classic && use !vulkan; then
 		ewarn "You enabled neither classic, gallium, nor vulkan "
@@ -198,6 +193,10 @@ src_configure() {
 	fi
 
 	append-flags "-UENABLE_SHADER_CACHE"
+
+	if use kvm_guest; then
+		emesonargs+=( -Ddri-search-path=/opt/google/cros-containers/lib )
+	fi
 
 	emesonargs+=(
 		-Dglx="${glx}"

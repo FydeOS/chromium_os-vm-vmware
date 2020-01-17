@@ -1,0 +1,26 @@
+From 9a59ad87df9ae2e804dd878ebb011f5835702ea7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marek=20Ol=C5=A1=C3=A1k?= <marek.olsak@amd.com>
+Date: Fri, 30 Aug 2019 17:55:27 -0400
+Subject: [PATCH] radeonsi/gfx9: honor user stride for imported buffers
+
+Reviewed-by: Bas Nieuwenhuizen <bas@basnieuwenhuizen.nl>
+---
+ src/gallium/drivers/radeonsi/si_texture.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/gallium/drivers/radeonsi/si_texture.c b/src/gallium/drivers/radeonsi/si_texture.c
+index f2d0a10a843..f376930d682 100644
+--- a/src/gallium/drivers/radeonsi/si_texture.c
++++ b/src/gallium/drivers/radeonsi/si_texture.c
+@@ -344,6 +344,8 @@ static int si_init_surface(struct si_screen *sscreen,
+ 	if (sscreen->info.chip_class >= GFX9) {
+ 		if (pitch) {
+ 			surface->u.gfx9.surf_pitch = pitch;
++			if (ptex->last_level == 0)
++				surface->u.gfx9.surf.epitch = pitch - 1;
+ 			surface->u.gfx9.surf_slice_size =
+ 				(uint64_t)pitch * surface->u.gfx9.surf_height * bpe;
+ 		}
+-- 
+2.21.0
+
