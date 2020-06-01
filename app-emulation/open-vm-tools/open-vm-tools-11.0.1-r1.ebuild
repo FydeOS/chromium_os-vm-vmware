@@ -1,23 +1,22 @@
 # Copyright 2007-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=7
 
-inherit autotools linux-info pam systemd toolchain-funcs user
+inherit autotools linux-info pam systemd toolchain-funcs
 
 DESCRIPTION="Opensourced tools for VMware guests"
 HOMEPAGE="https://github.com/vmware/open-vm-tools"
-MY_P="${P}-12406962"
+MY_P="${P}-14773994"
 SRC_URI="https://github.com/vmware/open-vm-tools/releases/download/stable-${PV}/${MY_P}.tar.gz"
 
 LICENSE="LGPL-2.1"
 SLOT="0"
 KEYWORDS="amd64 ~x86"
-IUSE="X +deploypkg +dnet doc +fuse +grabbitmqproxy gtkmm +icu multimon pam +resolutionkms +ssl static-libs +vgauth"
+IUSE="X +deploypkg +dnet doc +fuse gtkmm +icu multimon pam +resolutionkms +ssl static-libs +vgauth"
 REQUIRED_USE="
 	multimon? ( X )
 	vgauth? ( ssl )
-	grabbitmqproxy? ( ssl )
 "
 
 RDEPEND="
@@ -25,7 +24,7 @@ RDEPEND="
 	net-libs/libtirpc
 	deploypkg? ( dev-libs/libmspack )
 	fuse? ( sys-fs/fuse:0 )
-	pam? ( virtual/pam )
+	pam? ( sys-libs/pam )
 	ssl? ( dev-libs/openssl:0 )
 	vgauth? (
 		dev-libs/libxml2
@@ -60,6 +59,7 @@ DEPEND="${RDEPEND}
 "
 
 BDEPEND="
+	dev-util/glib-utils
 	virtual/pkgconfig
 	doc? ( app-doc/doxygen )
 "
@@ -69,9 +69,8 @@ S="${WORKDIR}/${MY_P}"
 PATCHES=(
 	"${FILESDIR}/10.1.0-mount.vmhgfs.patch"
 	"${FILESDIR}/10.1.0-Werror.patch"
+	"${FILESDIR}/11.0.1-udev-complaints.patch"
 )
-
-AM_OPTS="-i"
 
 pkg_setup() {
   export KBUILD_OUTPUT=${ROOT}usr/src/linux
@@ -88,11 +87,9 @@ src_prepare() {
 	eautoreconf
 }
 
-EPREFIX=$SYSROOT
 src_configure() {
 	local myeconfargs=(
 		--without-root-privileges
-    --without-kernel-modules
 		$(use_enable multimon)
 		$(use_with X x)
 		$(use_with X gtk3)
@@ -102,16 +99,15 @@ src_configure() {
 		$(use_enable resolutionkms)
 		$(use_enable static-libs static)
 		$(use_enable deploypkg)
-		$(use_enable grabbitmqproxy)
 		$(use_with pam)
 		$(use_enable vgauth)
-		--disable-caf
 		$(use_with dnet)
 		$(use_with icu)
 	)
 	# Avoid a bug in configure.ac
 	use ssl || myeconfargs+=( --without-ssl )
-	econf_build "${myeconfargs[@]}"
+
+	econf "${myeconfargs[@]}"
 }
 
 src_install() {
@@ -126,17 +122,17 @@ src_install() {
 	newinitd "${FILESDIR}/open-vm-tools.initd" vmware-tools
 	newconfd "${FILESDIR}/open-vm-tools.confd" vmware-tools
 
-    insinto /etc/init
+  insinto /etc/init
 	if use vgauth; then
 		systemd_newunit "${FILESDIR}"/vmtoolsd.vgauth.service vmtoolsd.service
 		systemd_dounit "${FILESDIR}"/vgauthd.service
-        doins ${FILESDIR}/vm-vgauth.conf
-        newins ${FILESDIR}/vgauth-open-vm-tools.conf open-vm-tools.conf
+    doins ${FILESDIR}/vm-vgauth.conf
+    newins ${FILESDIR}/vgauth-open-vm-tools.conf open-vm-tools.conf
 	else
 		systemd_dounit "${FILESDIR}"/vmtoolsd.service
-        doins ${FILESDIR}/open-vm-tools.conf
+    doins ${FILESDIR}/open-vm-tools.conf
 	fi
-    doins ${FILESDIR}/mount-vmware-share.conf
+  doins ${FILESDIR}/mount-vmware-share.conf
 	# Replace mount.vmhgfs with a wrapper
 	mv "${ED}"/usr/sbin/{mount.vmhgfs,hgfsmounter} || die
 	dosbin "${FILESDIR}/mount.vmhgfs"
@@ -147,12 +143,9 @@ src_install() {
 	if use X; then
 		fperms 4711 /usr/bin/vmware-user-suid-wrapper
 		dobin scripts/common/vmware-xdg-detect-de
-
-		elog "To be able to use the drag'n'drop feature of VMware for file"
-		elog "exchange, please add the users to the 'vmware' group."
 	fi
 }
 
 pkg_postinst() {
-	enewgroup vmware
+  enewgroup vmware
 }
