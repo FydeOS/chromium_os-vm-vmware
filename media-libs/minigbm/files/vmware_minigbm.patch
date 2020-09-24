@@ -13,10 +13,10 @@ index 3eab7ae..35f3e53 100644
  MINIGBM_CPPFLAGS := -std=c++14
  MINIGBM_CFLAGS := \
 diff --git a/Makefile b/Makefile
-index 35f92f2..86c86cc 100644
+index 8238026..8beee0b 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -34,6 +34,9 @@ endif
+@@ -37,6 +37,9 @@ endif
  ifdef DRV_VC4
  	CFLAGS += $(shell $(PKG_CONFIG) --cflags libdrm_vc4)
  endif
@@ -27,7 +27,7 @@ index 35f92f2..86c86cc 100644
  CPPFLAGS += $(PC_CFLAGS)
  LDLIBS += $(PC_LIBS)
 diff --git a/drv.c b/drv.c
-index 920cf4d..16b776b 100644
+index 636cd07..09d1be6 100644
 --- a/drv.c
 +++ b/drv.c
 @@ -64,6 +64,9 @@ extern const struct backend backend_udl;
@@ -40,24 +40,17 @@ index 920cf4d..16b776b 100644
  extern const struct backend backend_vgem;
  extern const struct backend backend_virtio_gpu;
  
-@@ -116,12 +119,16 @@ static const struct backend *drv_get_backend(int fd)
+@@ -116,6 +119,9 @@ static const struct backend *drv_get_backend(int fd)
  		&backend_udl,
  #ifdef DRV_VC4
  		&backend_vc4,
 +#endif
 +#ifdef DRV_VMWGFX
-+   &backend_vmwgfx,
++		&backend_vmwgfx,
  #endif
- 		&backend_vgem,	   &backend_virtio_gpu,
+ 		&backend_vgem,	    &backend_virtio_gpu,
  	};
- 
- 	for (i = 0; i < ARRAY_SIZE(backend_list); i++) {
- 		const struct backend *b = backend_list[i];
-+    drv_log("compare target:%s\n", b->name);
- 		// Exactly one of the main create functions must be defined.
- 		assert((b->bo_create != NULL) ^ (b->bo_create_from_metadata != NULL));
- 		// Either both or neither must be implemented.
-@@ -129,7 +136,7 @@ static const struct backend *drv_get_backend(int fd)
+@@ -129,7 +135,7 @@ static const struct backend *drv_get_backend(int fd)
  		// Both can't be defined, but it's okay for neither to be (i.e. only bo_create).
  		assert((b->bo_create_with_modifiers == NULL) ||
  		       (b->bo_create_from_metadata == NULL));
@@ -67,10 +60,40 @@ index 920cf4d..16b776b 100644
  			drmFreeVersion(drm_version);
  			return b;
 diff --git a/helpers.c b/helpers.c
-index 22a6106..e377398 100644
+index 17b1765..397540f 100644
 --- a/helpers.c
 +++ b/helpers.c
-@@ -243,7 +243,7 @@ uint32_t drv_size_from_format(uint32_t format, uint32_t stride, uint32_t height,
+@@ -54,14 +54,14 @@ static const struct planar_layout packed_4bpp_layout = {
+ 	.vertical_subsampling = { 1 },
+ 	.bytes_per_pixel = { 4 }
+ };
+-
++/*
+ static const struct planar_layout packed_8bpp_layout = {
+ 	.num_planes = 1,
+ 	.horizontal_subsampling = { 1 },
+ 	.vertical_subsampling = { 1 },
+ 	.bytes_per_pixel = { 8 }
+ };
+-
++*/
+ static const struct planar_layout biplanar_yuv_420_layout = {
+ 	.num_planes = 2,
+ 	.horizontal_subsampling = { 1, 2 },
+@@ -157,10 +157,10 @@ static const struct planar_layout *layout_from_format(uint32_t format)
+ 	case DRM_FORMAT_XRGB2101010:
+ 	case DRM_FORMAT_XRGB8888:
+ 		return &packed_4bpp_layout;
+-
++/*
+ 	case DRM_FORMAT_ABGR16161616F:
+ 		return &packed_8bpp_layout;
+-
++*/
+ 	default:
+ 		drv_log("UNKNOWN FORMAT %d\n", format);
+ 		return NULL;
+@@ -248,7 +248,7 @@ uint32_t drv_size_from_format(uint32_t format, uint32_t stride, uint32_t height,
  	return stride * drv_height_from_format(format, height, plane);
  }
  
@@ -89,6 +112,19 @@ index 19d0fd7..e39b3cc 100644
  bool drv_has_modifier(const uint64_t *list, uint32_t count, uint64_t modifier);
 +uint32_t subsample_stride(uint32_t stride, uint32_t format, size_t plane);
  #endif
+diff --git a/i915.c b/i915.c
+index e8c4909..e34389e 100644
+--- a/i915.c
++++ b/i915.c
+@@ -29,7 +29,7 @@ static const uint32_t scanout_render_formats[] = { DRM_FORMAT_ABGR2101010, DRM_F
+ 						   DRM_FORMAT_XBGR8888,	   DRM_FORMAT_XRGB2101010,
+ 						   DRM_FORMAT_XRGB8888 };
+ 
+-static const uint32_t render_formats[] = { DRM_FORMAT_ABGR16161616F };
++static const uint32_t render_formats[] = { DRM_FORMAT_ABGR2101010 };
+ 
+ static const uint32_t texture_only_formats[] = { DRM_FORMAT_R8, DRM_FORMAT_NV12, DRM_FORMAT_P010,
+ 						 DRM_FORMAT_YVU420, DRM_FORMAT_YVU420_ANDROID };
 diff --git a/include/includeCheck.h b/include/includeCheck.h
 new file mode 100644
 index 0000000..8cce7f1
@@ -813,7 +849,7 @@ index 0000000..01b0c59
 +#endif
 diff --git a/vmwgfx.c b/vmwgfx.c
 new file mode 100644
-index 0000000..2b51c56
+index 0000000..be0d474
 --- /dev/null
 +++ b/vmwgfx.c
 @@ -0,0 +1,198 @@
@@ -986,7 +1022,7 @@ index 0000000..2b51c56
 +   return addr;
 +}
 +
-+static unsigned int vmwgfx_resolve_format(struct driver *drv, unsigned int format, unsigned long use_flags)
++static uint32_t vmwgfx_resolve_format(struct driver *drv, uint32_t format, uint64_t use_flags)
 +{
 +  switch (format) {
 +  case DRM_FORMAT_FLEX_IMPLEMENTATION_DEFINED:

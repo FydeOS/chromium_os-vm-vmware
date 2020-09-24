@@ -1,0 +1,13 @@
+diff --git a/host/lib/crossystem.c b/host/lib/crossystem.c
+index 63f20c42..6ea41d02 100644
+--- a/host/lib/crossystem.c
++++ b/host/lib/crossystem.c
+@@ -458,7 +458,7 @@ int VbGetSystemPropertyInt(const char *name)
+ 			const char *fwtype = VbGetSystemPropertyString(
+ 				"mainfw_type", fwtype_buf, sizeof(fwtype_buf));
+ 			if (fwtype && !strcasecmp(fwtype, "nonchrome")) {
+-				value = 1;
++				value = 0;
+ 			}
+ 		} else {
+ 			value = 0;

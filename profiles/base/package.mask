@@ -4,3 +4,4 @@ sys-kernel/chromeos-kernel-4_19::chromiumos
 sys-kernel/chromeos-kernel-5_4::chromiumos
 chromeos-base/chromeos-chrome::chromiumos
 chromeos-base/selinux-policy::chromiumos
+chromeos-base/vboot_reference::chromiumos
