@@ -1,14 +1,14 @@
 diff --git a/Android.mk b/Android.mk
-index 3eab7ae..35f3e53 100644
+index 18c1bba..19024d1 100644
 --- a/Android.mk
 +++ b/Android.mk
-@@ -28,7 +28,8 @@ MINIGBM_SRC := \
- 	udl.c \
+@@ -23,7 +23,8 @@ MINIGBM_SRC := \
+ 	rockchip.c \
+ 	tegra.c \
  	vc4.c \
- 	vgem.c \
 -	virtio_gpu.c
 +	virtio_gpu.c \
-+  vmwgfx.c
++	vmwgfx.c
  
  MINIGBM_CPPFLAGS := -std=c++14
  MINIGBM_CFLAGS := \
@@ -27,30 +27,30 @@ index 8238026..8beee0b 100644
  CPPFLAGS += $(PC_CFLAGS)
  LDLIBS += $(PC_LIBS)
 diff --git a/drv.c b/drv.c
-index 636cd07..09d1be6 100644
+index 5c8f9a0..ce0389c 100644
 --- a/drv.c
 +++ b/drv.c
-@@ -64,6 +64,9 @@ extern const struct backend backend_udl;
+@@ -49,6 +49,9 @@ extern const struct backend backend_tegra;
  #ifdef DRV_VC4
  extern const struct backend backend_vc4;
  #endif
 +#ifdef DRV_VMWGFX
 +extern const struct backend backend_vmwgfx;
 +#endif
- extern const struct backend backend_vgem;
- extern const struct backend backend_virtio_gpu;
  
-@@ -116,6 +119,9 @@ static const struct backend *drv_get_backend(int fd)
- 		&backend_udl,
+ // Dumb / generic drivers
+ extern const struct backend backend_evdi;
+@@ -93,6 +96,9 @@ static const struct backend *drv_get_backend(int fd)
+ #endif
  #ifdef DRV_VC4
  		&backend_vc4,
 +#endif
 +#ifdef DRV_VMWGFX
 +		&backend_vmwgfx,
  #endif
- 		&backend_vgem,	    &backend_virtio_gpu,
- 	};
-@@ -129,7 +135,7 @@ static const struct backend *drv_get_backend(int fd)
+ 		&backend_evdi,	   &backend_marvell,	&backend_meson,	    &backend_nouveau,
+ 		&backend_komeda,   &backend_radeon,	&backend_synaptics, &backend_virtio_gpu,
+@@ -108,7 +114,7 @@ static const struct backend *drv_get_backend(int fd)
  		// Both can't be defined, but it's okay for neither to be (i.e. only bo_create).
  		assert((b->bo_create_with_modifiers == NULL) ||
  		       (b->bo_create_from_metadata == NULL));
@@ -60,7 +60,7 @@ index 636cd07..09d1be6 100644
  			drmFreeVersion(drm_version);
  			return b;
 diff --git a/helpers.c b/helpers.c
-index 17b1765..397540f 100644
+index 326dddf..dbc9a4d 100644
 --- a/helpers.c
 +++ b/helpers.c
 @@ -54,14 +54,14 @@ static const struct planar_layout packed_4bpp_layout = {
@@ -93,7 +93,7 @@ index 17b1765..397540f 100644
  	default:
  		drv_log("UNKNOWN FORMAT %d\n", format);
  		return NULL;
-@@ -248,7 +248,7 @@ uint32_t drv_size_from_format(uint32_t format, uint32_t stride, uint32_t height,
+@@ -249,7 +249,7 @@ uint32_t drv_size_from_format(uint32_t format, uint32_t stride, uint32_t height,
  	return stride * drv_height_from_format(format, height, plane);
  }
  
@@ -102,29 +102,6 @@ index 17b1765..397540f 100644
  {
  	if (plane != 0) {
  		switch (format) {
-diff --git a/helpers.h b/helpers.h
-index 19d0fd7..e39b3cc 100644
---- a/helpers.h
-+++ b/helpers.h
-@@ -42,4 +42,5 @@ int drv_modify_linear_combinations(struct driver *drv);
- uint64_t drv_pick_modifier(const uint64_t *modifiers, uint32_t count,
- 			   const uint64_t *modifier_order, uint32_t order_count);
- bool drv_has_modifier(const uint64_t *list, uint32_t count, uint64_t modifier);
-+uint32_t subsample_stride(uint32_t stride, uint32_t format, size_t plane);
- #endif
-diff --git a/i915.c b/i915.c
-index e8c4909..e34389e 100644
---- a/i915.c
-+++ b/i915.c
-@@ -29,7 +29,7 @@ static const uint32_t scanout_render_formats[] = { DRM_FORMAT_ABGR2101010, DRM_F
- 						   DRM_FORMAT_XBGR8888,	   DRM_FORMAT_XRGB2101010,
- 						   DRM_FORMAT_XRGB8888 };
- 
--static const uint32_t render_formats[] = { DRM_FORMAT_ABGR16161616F };
-+static const uint32_t render_formats[] = { DRM_FORMAT_ABGR2101010 };
- 
- static const uint32_t texture_only_formats[] = { DRM_FORMAT_R8, DRM_FORMAT_NV12, DRM_FORMAT_P010,
- 						 DRM_FORMAT_YVU420, DRM_FORMAT_YVU420_ANDROID };
 diff --git a/include/includeCheck.h b/include/includeCheck.h
 new file mode 100644
 index 0000000..8cce7f1

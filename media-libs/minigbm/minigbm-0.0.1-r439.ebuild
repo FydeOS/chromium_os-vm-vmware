@@ -3,6 +3,8 @@
 
 EAPI="6"
 
+CROS_WORKON_COMMIT="9fe8c20f05116869f86d91fc542a17b9badf9ec3"
+CROS_WORKON_TREE="445cf807514840545f4e7761b911b42bbe92af07"
 CROS_WORKON_PROJECT="chromiumos/platform/minigbm"
 CROS_WORKON_LOCALNAME="../platform/minigbm"
 CROS_WORKON_OUTOFTREE_BUILD=1
@@ -14,10 +16,10 @@ HOMEPAGE="https://chromium.googlesource.com/chromiumos/platform/minigbm"
 
 LICENSE="BSD-Google"
 SLOT="0"
-KEYWORDS="~*"
+KEYWORDS="*"
 VIDEO_CARDS="
 	amdgpu exynos intel marvell mediatek msm
-	radeon radeonsi rockchip tegra vc4 virgl
+	radeon radeonsi rockchip tegra vc4 virgl vmware
 "
 IUSE="-asan kernel-3_8 kernel-3_14 kernel-3_18 linear_align_256"
 for card in ${VIDEO_CARDS}; do
@@ -39,6 +41,7 @@ DEPEND="${RDEPEND}
 	)"
 
 src_prepare() {
+  epatch ${FILESDIR}/vmware_minigbm.patch
 	default
 	sanitizers-setup-env
 	cros-common.mk_src_prepare
@@ -66,6 +69,7 @@ src_configure() {
 	use video_cards_tegra && append-cppflags -DDRV_TEGRA && export DRV_TEGRA=1
 	use video_cards_vc4 && append-cppflags -DDRV_VC4 && export DRV_VC4=1
 	use video_cards_virgl && append-cppflags -DDRV_VIRGL && export DRV_VIRGL=1
+  use video_cards_vmware && append-cppflags -DDRV_VMWGFX && export DRV_VMWGFX=1
 	use linear_align_256 && append-cppflags -DLINEAR_ALIGN_256
 	cros-common.mk_src_configure
 }

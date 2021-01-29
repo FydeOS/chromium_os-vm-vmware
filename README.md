@@ -41,7 +41,9 @@ repo sync -j4
    ```
    (inside) export BOARD=amd64-generic_vmware
    (inside) setup_board --board=${BOARD}
-   (inside) sudo ~/trunk/src/overlays/overlay-variant-amd64-generic-vmware/prepare_host_env.sh
+   ```
+   ~~ `(inside) sudo ~/trunk/src/overlays/overlay-variant-amd64-generic-vmware/prepare_host_env.sh` ~~ 
+   ```
    (inside) ./build_packages --board=${BOARD} --nousepkg
    (inside) ./build_image --board=${BOARD} --noenable_rootfs_verification test
    ```

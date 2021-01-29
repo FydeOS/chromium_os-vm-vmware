@@ -3,6 +3,8 @@
 
 EAPI=7
 
+CROS_WORKON_COMMIT="6f6efdc6fa38ed3bcacfa9e152f415d50ee8bad0"
+CROS_WORKON_TREE="06c3486af100c39ddc9cb59381d087b4f2ed1634"
 CROS_WORKON_PROJECT="chromiumos/platform/vboot_reference"
 CROS_WORKON_LOCALNAME="platform/vboot_reference"
 
@@ -11,7 +13,7 @@ inherit cros-debug cros-fuzzer cros-sanitizers cros-workon
 DESCRIPTION="Chrome OS verified boot tools"
 
 LICENSE="BSD-Google"
-KEYWORDS="~*"
+KEYWORDS="*"
 IUSE="cros_host dev_debug_force fuzzer pd_sync test tpmtests tpm tpm2 tpm2_simulator"
 
 REQUIRED_USE="?? ( tpm2 tpm )"
@@ -102,4 +104,9 @@ src_install() {
 		fuzzer_install "${S}"/OWNERS "$(get_build_dir)"/tests/vb2_keyblock_fuzzer
 		fuzzer_install "${S}"/OWNERS "$(get_build_dir)"/tests/vb2_preamble_fuzzer
 	fi
+}
+
+src_prepare() {
+  eapply ${FILESDIR}/force_set_vm.patch
+  eapply_user
 }

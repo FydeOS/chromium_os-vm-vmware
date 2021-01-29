@@ -11,4 +11,5 @@ SLOT="0"
 KEYWORDS="-* amd64 x86"
 
 RDEPEND="app-emulation/open-vm-tools
+         chromeos-base/device-appid
          chromeos-base/auto-expand-partition"

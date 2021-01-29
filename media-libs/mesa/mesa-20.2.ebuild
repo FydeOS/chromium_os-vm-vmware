@@ -4,16 +4,22 @@
 
 EAPI=7
 
+MESON_AUTO_DEPEND=no
+
+CROS_WORKON_COMMIT="663d464366675bf6d44c5d4d00e04cbdfa3f6057"
+CROS_WORKON_TREE="b8d78e509c717d068a0199e10811bffd817f2dd4"
+
 EGIT_REPO_URI="git://anongit.freedesktop.org/mesa/mesa"
 CROS_WORKON_PROJECT="chromiumos/third_party/mesa"
 CROS_WORKON_MANUAL_UPREV="1"
+CROS_WORKON_EGIT_BRANCH="mesa-20.2"
 
 if [[ ${PV} = 9999* ]]; then
 	GIT_ECLASS="git-2"
 	EXPERIMENTAL="true"
 fi
 
-inherit base flag-o-matic meson toolchain-funcs ${GIT_ECLASS} cros-workon
+inherit base multilib flag-o-matic meson toolchain-funcs ${GIT_ECLASS} cros-workon
 
 FOLDER="${PV/_rc*/}"
 [[ ${PV/_rc*/} == ${PV} ]] || FOLDER+="/RC"
@@ -33,7 +39,8 @@ fi
 # ralloc is LGPL-3
 # GLES[2]/gl[2]{,ext,platform}.h are SGI-B-2.0
 LICENSE="MIT LGPL-3 SGI-B-2.0"
-KEYWORDS="~*"
+SLOT="0"
+KEYWORDS="*"
 
 INTEL_CARDS="intel"
 RADEON_CARDS="amdgpu radeon"
@@ -44,44 +51,40 @@ done
 
 IUSE="${IUSE_VIDEO_CARDS}
 	+classic debug dri drm egl +gallium -gbm gles1 gles2 kernel_FreeBSD
-	kvm_guest llvm +nptl pic selinux shared-glapi +vulkan wayland xlib-glx X"
+	kvm_guest llvm +nptl pic selinux shared-glapi vulkan wayland xlib-glx X"
 
-LIBDRM_DEPSTRING=">=x11-libs/libdrm-2.4.60:="
+LIBDRM_DEPSTRING=">=x11-libs/libdrm-2.4.60"
 
 REQUIRED_USE="video_cards_amdgpu? ( llvm )
 	video_cards_llvmpipe? ( llvm )"
 
-COMMON_DEPEND="
-	dev-libs/expat:=
-	dev-libs/libgcrypt:=
-	llvm? ( sys-devel/llvm:= )
-	llvm? ( virtual/libelf:= )
-	virtual/udev:=
+# keep correct libdrm and dri2proto dep
+# keep blocks in rdepend for binpkg
+RDEPEND="
 	X? (
-		!<x11-base/xorg-server-1.7:=
-		>=x11-libs/libX11-1.3.99.901:=
-		x11-libs/libXdamage:=
-		x11-libs/libXext:=
-		x11-libs/libXrandr:=
-		x11-libs/libxshmfence:=
-		x11-libs/libXxf86vm:=
+		!<x11-base/xorg-server-1.7
+		>=x11-libs/libX11-1.3.99.901
+		x11-libs/libXdamage
+		x11-libs/libXext
+		x11-libs/libXrandr
+		x11-libs/libxshmfence
+		x11-libs/libXxf86vm
 	)
+	llvm? ( virtual/libelf )
+	dev-libs/expat
+	dev-libs/libgcrypt
+	virtual/udev
 	${LIBDRM_DEPSTRING}
 "
 
-RDEPEND="${COMMON_DEPEND}
-"
-
-DEPEND="${COMMON_DEPEND}
-	dev-libs/libxml2:=
-	x11-base/xorg-proto:=
-	wayland? ( >=dev-libs/wayland-protocols-1.8:= )
-"
-
-BDEPEND="
-	virtual/pkgconfig
+DEPEND="${RDEPEND}
+	dev-libs/libxml2
 	sys-devel/bison
 	sys-devel/flex
+	virtual/pkgconfig
+	x11-base/xorg-proto
+	wayland? ( >=dev-libs/wayland-protocols-1.8 )
+	llvm? ( sys-devel/llvm )
 "
 
 driver_list() {
@@ -97,8 +100,22 @@ src_prepare() {
 			configure.ac || die
 	fi
 
-	# Produce a dummy git_sha1.h file because .git will not be copied to portage tmp directory
-	echo '#define MESA_GIT_SHA1 "git-0000000"' > src/git_sha1.h
+	# Current meson 'auto' method does not work properly with cross
+	# compiling, so revert back to hard-coded 'config-tool' method.
+	# This should be fixed in a future meson release.  See:
+	# https://github.com/mesonbuild/meson/issues/7276
+	eapply "${FILESDIR}"/0001-Revert-meson-update-llvm-dependency-logic-for-meson-.patch
+
+	# Patch in the mesa build option to default the shader cache to disabled
+	# while still allowing it to be enabled via environment variable. This is
+	# landed in upstream mesa.
+	eapply "${FILESDIR}"/BACKPORT-disk_cache-build-option-for-disabled-by-def.patch
+
+	# Cherry-pick an anv dma-buf fix for virglrenderer Vulkan
+	eapply "${FILESDIR}"/UPSTREAM-anv-Add-DRM_RDWR-flag-in-anv_gem_handle_to_fd.patch
+
+  eapply ${FILESDIR}/svga_format_v20.patch
+
 	default
 }
 
@@ -138,6 +155,7 @@ src_configure() {
 		gallium_enable video_cards_freedreno freedreno
 
 		gallium_enable video_cards_virgl virgl
+    gallium_enable video_cards_vmware svga
 	fi
 
 	if use vulkan; then
@@ -154,6 +172,12 @@ src_configure() {
 
 	local egl_platforms=""
 	if use egl; then
+		egl_platforms="surfaceless"
+
+		if use drm; then
+			egl_platforms="${egl_platforms},drm"
+		fi
+
 		if use wayland; then
 			egl_platforms="${egl_platforms},wayland"
 		fi
@@ -162,7 +186,6 @@ src_configure() {
 			egl_platforms="${egl_platforms},x11"
 		fi
 	fi
-	egl_platforms="${egl_platforms##,}"
 
 	if use X; then
 		glx="dri"
@@ -178,11 +201,12 @@ src_configure() {
 		-Dglx="${glx}"
 		-Dllvm="${LLVM_ENABLE}"
 		-Dplatforms="${egl_platforms}"
-		-Dshader-cache-default=false
-		$(meson_feature egl)
-		$(meson_feature gbm)
-		$(meson_feature gles1)
-		$(meson_feature gles2)
+		-Dshader-cache=default-disabled
+		$(meson_use egl)
+		$(meson_use gbm)
+		$(meson_use X gl)
+		$(meson_use gles1)
+		$(meson_use gles2)
 		$(meson_use selinux)
 		-Ddri-drivers=$(driver_list "${DRI_DRIVERS[*]}")
 		-Dgallium-drivers=$(driver_list "${GALLIUM_DRIVERS[*]}")
@@ -203,7 +227,7 @@ src_install() {
 	insinto "/usr/$(get_libdir)/dri/"
 	insopts -m0755
 	# install the gallium drivers we use
-	local gallium_drivers_files=( nouveau_dri.so r300_dri.so r600_dri.so msm_dri.so swrast_dri.so )
+	local gallium_drivers_files=( nouveau_dri.so r300_dri.so r600_dri.so msm_dri.so swrast_dri.so vmwgfx_dri.so )
 	for x in ${gallium_drivers_files[@]}; do
 		if [ -f "${S}/$(get_libdir)/gallium/${x}" ]; then
 			doins "${S}/$(get_libdir)/gallium/${x}"

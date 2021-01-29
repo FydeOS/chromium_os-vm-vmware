@@ -3,6 +3,8 @@
 
 EAPI=7
 
+CROS_WORKON_COMMIT="1a1688a172e47af4907733910afb1c483f0cec14"
+CROS_WORKON_TREE="9c98853433abeb8f363cc09c6dacb2814a40fd09"
 CROS_WORKON_PROJECT="chromiumos/third_party/kernel"
 CROS_WORKON_LOCALNAME="kernel/v5.4"
 CROS_WORKON_EGIT_BRANCH="chromeos-5.4"
@@ -12,7 +14,7 @@ inherit cros-workon cros-kernel2
 
 HOMEPAGE="https://www.chromium.org/chromium-os/chromiumos-design-docs/chromium-os-kernel"
 DESCRIPTION="Chrome OS Linux Kernel 5.4"
-KEYWORDS="~*"
+KEYWORDS="*"
 
 # Change the following (commented out) number to the next prime number
 # when you change "cros-kernel2.eclass" to work around http://crbug.com/220902
