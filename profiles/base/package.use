@@ -1,6 +1,7 @@
 app-emulation/open-vm-tools -icu resolutionkms fuse vgauth -deploypkg dnet -pam
 sys-kernel/chromeos-kernel-4_19 -clang apply_patches
 sys-kernel/chromeos-kernel-5_4 apply_patches
+sys-kernel/chromeos-kernel-5_10 apply_patches
 media-libs/mesa egl gles2 shared-glapi
 sys-apps/gptfdisk -ncurses
 chromeos-base/chromeos-chrome chrome_media v4l2_codec
