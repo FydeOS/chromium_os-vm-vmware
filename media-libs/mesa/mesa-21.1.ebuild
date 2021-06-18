@@ -6,13 +6,13 @@ EAPI=7
 
 MESON_AUTO_DEPEND=no
 
-CROS_WORKON_COMMIT="663d464366675bf6d44c5d4d00e04cbdfa3f6057"
-CROS_WORKON_TREE="b8d78e509c717d068a0199e10811bffd817f2dd4"
+CROS_WORKON_COMMIT="0c94b3f55bc5f1db5aba3b294317b97241bfd9a0"
+CROS_WORKON_TREE="5d5b7c74a6aae79cfcfb57dcff3bc4574df27c32"
 
 EGIT_REPO_URI="git://anongit.freedesktop.org/mesa/mesa"
 CROS_WORKON_PROJECT="chromiumos/third_party/mesa"
 CROS_WORKON_MANUAL_UPREV="1"
-CROS_WORKON_EGIT_BRANCH="mesa-20.2"
+CROS_WORKON_EGIT_BRANCH="master"
 
 if [[ ${PV} = 9999* ]]; then
 	GIT_ECLASS="git-2"
@@ -99,26 +99,10 @@ src_prepare() {
 			-e "s/-DHAVE_POSIX_MEMALIGN//" \
 			configure.ac || die
 	fi
-
-	# Current meson 'auto' method does not work properly with cross
-	# compiling, so revert back to hard-coded 'config-tool' method.
-	# This should be fixed in a future meson release.  See:
-	# https://github.com/mesonbuild/meson/issues/7276
-	eapply "${FILESDIR}"/0001-Revert-meson-update-llvm-dependency-logic-for-meson-.patch
-
-	# Patch in the mesa build option to default the shader cache to disabled
-	# while still allowing it to be enabled via environment variable. This is
-	# landed in upstream mesa.
-	eapply "${FILESDIR}"/BACKPORT-disk_cache-build-option-for-disabled-by-def.patch
-
-	# Cherry-pick an anv dma-buf fix for virglrenderer Vulkan
-	eapply "${FILESDIR}"/UPSTREAM-anv-Add-DRM_RDWR-flag-in-anv_gem_handle_to_fd.patch
-
-  if use video_cards_vmware; then 
+  if use video_cards_vmware; then
     eapply ${FILESDIR}/svga_format_v20.patch
     eapply ${FILESDIR}/angle_draw.patch
   fi
-
 	default
 }
 
@@ -175,12 +159,6 @@ src_configure() {
 
 	local egl_platforms=""
 	if use egl; then
-		egl_platforms="surfaceless"
-
-		if use drm; then
-			egl_platforms="${egl_platforms},drm"
-		fi
-
 		if use wayland; then
 			egl_platforms="${egl_platforms},wayland"
 		fi
@@ -189,6 +167,7 @@ src_configure() {
 			egl_platforms="${egl_platforms},x11"
 		fi
 	fi
+	egl_platforms="${egl_platforms##,}"
 
 	if use X; then
 		glx="dri"
@@ -204,12 +183,11 @@ src_configure() {
 		-Dglx="${glx}"
 		-Dllvm="${LLVM_ENABLE}"
 		-Dplatforms="${egl_platforms}"
-		-Dshader-cache=default-disabled
-		$(meson_use egl)
-		$(meson_use gbm)
-		$(meson_use X gl)
-		$(meson_use gles1)
-		$(meson_use gles2)
+		-Dshader-cache-default=false
+		$(meson_feature egl)
+		$(meson_feature gbm)
+		$(meson_feature gles1)
+		$(meson_feature gles2)
 		$(meson_use selinux)
 		-Ddri-drivers=$(driver_list "${DRI_DRIVERS[*]}")
 		-Dgallium-drivers=$(driver_list "${GALLIUM_DRIVERS[*]}")

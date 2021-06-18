@@ -1,8 +1,8 @@
 diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c b/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c
-index abbca8b0b3c53..29aa4b8a1086c 100644
+index 312ed0881a99..f80f2b8baeac 100644
 --- a/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c
 +++ b/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c
-@@ -924,10 +924,10 @@ static int vmw_kms_new_framebuffer_surface(struct vmw_private *dev_priv,
+@@ -919,10 +919,10 @@ static int vmw_kms_new_framebuffer_surface(struct vmw_private *dev_priv,
  
  	switch (mode_cmd->pixel_format) {
  	case DRM_FORMAT_ARGB8888:
@@ -15,7 +15,7 @@ index abbca8b0b3c53..29aa4b8a1086c 100644
  		break;
  	case DRM_FORMAT_RGB565:
  		format = SVGA3D_R5G6B5;
-@@ -1156,11 +1156,21 @@ static int vmw_create_bo_proxy(struct drm_device *dev,
+@@ -1152,11 +1152,21 @@ static int vmw_create_bo_proxy(struct drm_device *dev,
  
  	switch (mode_cmd->pixel_format) {
  	case DRM_FORMAT_ARGB8888:
@@ -39,7 +39,7 @@ index abbca8b0b3c53..29aa4b8a1086c 100644
  	case DRM_FORMAT_RGB565:
  	case DRM_FORMAT_XRGB1555:
  		format = SVGA3D_R5G6B5;
-@@ -1232,6 +1242,8 @@ static int vmw_kms_new_framebuffer_bo(struct vmw_private *dev_priv,
+@@ -1229,6 +1239,8 @@ static int vmw_kms_new_framebuffer_bo(struct vmw_private *dev_priv,
  		switch (mode_cmd->pixel_format) {
  		case DRM_FORMAT_XRGB8888:
  		case DRM_FORMAT_ARGB8888:
@@ -49,10 +49,10 @@ index abbca8b0b3c53..29aa4b8a1086c 100644
  		case DRM_FORMAT_XRGB1555:
  		case DRM_FORMAT_RGB565:
 diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_kms.h b/drivers/gpu/drm/vmwgfx/vmwgfx_kms.h
-index bbc809f7bd8a9..8ac1d6c2a04e1 100644
+index 3ee03227607c..1938cbdb26fd 100644
 --- a/drivers/gpu/drm/vmwgfx/vmwgfx_kms.h
 +++ b/drivers/gpu/drm/vmwgfx/vmwgfx_kms.h
-@@ -251,6 +251,8 @@ static const uint32_t __maybe_unused vmw_primary_plane_formats[] = {
+@@ -251,6 +251,8 @@ static const uint32_t vmw_primary_plane_formats[] = {
  	DRM_FORMAT_RGB888,
  	DRM_FORMAT_XRGB8888,
  	DRM_FORMAT_ARGB8888,
@@ -60,12 +60,12 @@ index bbc809f7bd8a9..8ac1d6c2a04e1 100644
 +	DRM_FORMAT_XBGR8888,
  };
  
- static const uint32_t __maybe_unused vmw_cursor_plane_formats[] = {
+ static const uint32_t vmw_cursor_plane_formats[] = {
 diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c b/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c
-index c3e55c1376eb8..e6f8383170a7d 100644
+index 3914bfee0533..9dd61a2e3a12 100644
 --- a/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c
 +++ b/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c
-@@ -854,7 +854,11 @@ int vmw_surface_define_ioctl(struct drm_device *dev, void *data,
+@@ -851,7 +851,11 @@ int vmw_surface_define_ioctl(struct drm_device *dev, void *data,
  	    metadata->num_sizes == 1 &&
  	    metadata->sizes[0].width == 64 &&
  	    metadata->sizes[0].height == 64 &&

@@ -6,13 +6,13 @@ EAPI=7
 
 MESON_AUTO_DEPEND=no
 
-CROS_WORKON_COMMIT="663d464366675bf6d44c5d4d00e04cbdfa3f6057"
+CROS_WORKON_COMMIT="8ec046344b57f7041952f018f14ef626de94fe5d"
 CROS_WORKON_TREE="b8d78e509c717d068a0199e10811bffd817f2dd4"
 
 EGIT_REPO_URI="git://anongit.freedesktop.org/mesa/mesa"
 CROS_WORKON_PROJECT="chromiumos/third_party/mesa"
 CROS_WORKON_MANUAL_UPREV="1"
-CROS_WORKON_EGIT_BRANCH="mesa-20.2"
+CROS_WORKON_EGIT_BRANCH="mesa-21.0"
 
 if [[ ${PV} = 9999* ]]; then
 	GIT_ECLASS="git-2"
@@ -106,19 +106,9 @@ src_prepare() {
 	# https://github.com/mesonbuild/meson/issues/7276
 	eapply "${FILESDIR}"/0001-Revert-meson-update-llvm-dependency-logic-for-meson-.patch
 
-	# Patch in the mesa build option to default the shader cache to disabled
-	# while still allowing it to be enabled via environment variable. This is
-	# landed in upstream mesa.
-	eapply "${FILESDIR}"/BACKPORT-disk_cache-build-option-for-disabled-by-def.patch
-
-	# Cherry-pick an anv dma-buf fix for virglrenderer Vulkan
-	eapply "${FILESDIR}"/UPSTREAM-anv-Add-DRM_RDWR-flag-in-anv_gem_handle_to_fd.patch
-
-  if use video_cards_vmware; then 
-    eapply ${FILESDIR}/svga_format_v20.patch
-    eapply ${FILESDIR}/angle_draw.patch
-  fi
-
+	#Fix for deqp failures on CML/KBL GT1
+	eapply "${FILESDIR}"/UPSTREAM-intel-change-urb-max-shader-geometry-for-CML-GT1.patch
+	eapply "${FILESDIR}"/UPSTREAM-intel-change-urb-max-shader-geometry-for-KBL-GT1.patch
 	default
 }
 
@@ -158,7 +148,6 @@ src_configure() {
 		gallium_enable video_cards_freedreno freedreno
 
 		gallium_enable video_cards_virgl virgl
-    gallium_enable video_cards_vmware svga
 	fi
 
 	if use vulkan; then
@@ -175,12 +164,6 @@ src_configure() {
 
 	local egl_platforms=""
 	if use egl; then
-		egl_platforms="surfaceless"
-
-		if use drm; then
-			egl_platforms="${egl_platforms},drm"
-		fi
-
 		if use wayland; then
 			egl_platforms="${egl_platforms},wayland"
 		fi
@@ -189,6 +172,7 @@ src_configure() {
 			egl_platforms="${egl_platforms},x11"
 		fi
 	fi
+	egl_platforms="${egl_platforms##,}"
 
 	if use X; then
 		glx="dri"
@@ -204,12 +188,11 @@ src_configure() {
 		-Dglx="${glx}"
 		-Dllvm="${LLVM_ENABLE}"
 		-Dplatforms="${egl_platforms}"
-		-Dshader-cache=default-disabled
-		$(meson_use egl)
-		$(meson_use gbm)
-		$(meson_use X gl)
-		$(meson_use gles1)
-		$(meson_use gles2)
+		-Dshader-cache-default=false
+		$(meson_feature egl)
+		$(meson_feature gbm)
+		$(meson_feature gles1)
+		$(meson_feature gles2)
 		$(meson_use selinux)
 		-Ddri-drivers=$(driver_list "${DRI_DRIVERS[*]}")
 		-Dgallium-drivers=$(driver_list "${GALLIUM_DRIVERS[*]}")
@@ -230,7 +213,7 @@ src_install() {
 	insinto "/usr/$(get_libdir)/dri/"
 	insopts -m0755
 	# install the gallium drivers we use
-	local gallium_drivers_files=( nouveau_dri.so r300_dri.so r600_dri.so msm_dri.so swrast_dri.so vmwgfx_dri.so )
+	local gallium_drivers_files=( nouveau_dri.so r300_dri.so r600_dri.so msm_dri.so swrast_dri.so )
 	for x in ${gallium_drivers_files[@]}; do
 		if [ -f "${S}/$(get_libdir)/gallium/${x}" ]; then
 			doins "${S}/$(get_libdir)/gallium/${x}"

@@ -40,7 +40,7 @@ fi
 # GLES[2]/gl[2]{,ext,platform}.h are SGI-B-2.0
 LICENSE="MIT LGPL-3 SGI-B-2.0"
 SLOT="0"
-KEYWORDS="*"
+KEYWORDS="~*"
 
 INTEL_CARDS="intel"
 RADEON_CARDS="amdgpu radeon"

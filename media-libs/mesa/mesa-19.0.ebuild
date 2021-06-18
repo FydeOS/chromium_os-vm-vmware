@@ -114,7 +114,7 @@ src_prepare() {
 	epatch "${FILESDIR}"/0003-GL_MESA_framebuffer_flip_y-mesa-Allow-MESA_framebuffer_flip_y-for-GLES-3.patch
 	epatch "${FILESDIR}"/0004-GL_MESA_framebuffer_flip_y-gallium-Enable-MESA_framebuffer_flip_y.patch
 	epatch "${FILESDIR}"/0005-GL_MESA_framebuffer_flip_y-st-mesa-Fix-inverted-polygon-stipple-condition.patch
-  use video_cards_vmware && epatch ${FILESDIR}/svga_format.patch
+  use video_cards_vmware && epatch ${FILESDIR}/svga_format.patch && epatch ${FILESDIR}/svga_max_bufs.patch
 
 	default
 }

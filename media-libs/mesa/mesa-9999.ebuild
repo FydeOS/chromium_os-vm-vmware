@@ -138,6 +138,7 @@ src_configure() {
 		gallium_enable video_cards_freedreno freedreno
 
 		gallium_enable video_cards_virgl virgl
+    gallium_enable video_cards_vmware svga
 	fi
 
 	if use vulkan; then
@@ -203,7 +204,7 @@ src_install() {
 	insinto "/usr/$(get_libdir)/dri/"
 	insopts -m0755
 	# install the gallium drivers we use
-	local gallium_drivers_files=( nouveau_dri.so r300_dri.so r600_dri.so msm_dri.so swrast_dri.so )
+	local gallium_drivers_files=( nouveau_dri.so r300_dri.so r600_dri.so msm_dri.so swrast_dri.so vmwgfx_dri.so )
 	for x in ${gallium_drivers_files[@]}; do
 		if [ -f "${S}/$(get_libdir)/gallium/${x}" ]; then
 			doins "${S}/$(get_libdir)/gallium/${x}"
