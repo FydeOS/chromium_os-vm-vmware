@@ -2062,7 +2062,7 @@ index 0000000..d2e3bc8
 +#ifdef DRV_VMWGFX
 +
 +#include "drv_priv.h"
-+#include "helpers.h"
++#include "drv_helpers.h"
 +#include "external/svga3d_types.h"
 +#include "util.h"
 +#include <stdio.h>
@@ -2229,7 +2229,7 @@ index 0000000..d2e3bc8
 +   //drv_log("map offset:0x%llx, length:%zu, to addr:%p\n", rep->crep.buffer_map_handle, vma->length, addr);
 +   return addr;
 +}
-+
++#if 0
 +static uint32_t vmwgfx_resolve_format(struct driver *drv, uint32_t format, uint64_t use_flags)
 +{
 +  switch (format) {
@@ -2245,7 +2245,7 @@ index 0000000..d2e3bc8
 +    return format;
 +  }
 +}
-+
++#endif
 +const struct backend backend_vmwgfx = {
 +	.name = "vmwgfx",
 +	.init = vmwgfx_init,
@@ -2255,7 +2255,7 @@ index 0000000..d2e3bc8
 +	.bo_destroy = drv_dumb_bo_destroy,
 +	.bo_map = vmwgfx_bo_map,
 +	.bo_unmap = drv_bo_munmap,
-+	.resolve_format = vmwgfx_resolve_format,
++	.resolve_format_and_use_flags = drv_resolve_format_and_use_flags_helper,
 +};
 +
 +#endif

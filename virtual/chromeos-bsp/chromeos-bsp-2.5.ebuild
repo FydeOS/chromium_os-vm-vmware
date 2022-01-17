@@ -12,5 +12,6 @@ KEYWORDS="-* amd64 x86"
 
 RDEPEND="app-emulation/open-vm-tools
          chromeos-base/device-appid
+         chromeos-base/chrome-default-chromedev-flags
          dev-libs/wayland
          chromeos-base/auto-expand-partition"

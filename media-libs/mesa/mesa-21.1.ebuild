@@ -6,13 +6,13 @@ EAPI=7
 
 MESON_AUTO_DEPEND=no
 
-CROS_WORKON_COMMIT="0c94b3f55bc5f1db5aba3b294317b97241bfd9a0"
-CROS_WORKON_TREE="5d5b7c74a6aae79cfcfb57dcff3bc4574df27c32"
+CROS_WORKON_COMMIT="997a5e622774da30930e5d35b2d2a398a14e7b0c"
+CROS_WORKON_TREE="80dc2ebe7f0b4590dfd9f91955aa59cccf2bb5f8"
 
 EGIT_REPO_URI="git://anongit.freedesktop.org/mesa/mesa"
 CROS_WORKON_PROJECT="chromiumos/third_party/mesa"
 CROS_WORKON_MANUAL_UPREV="1"
-CROS_WORKON_EGIT_BRANCH="master"
+CROS_WORKON_EGIT_BRANCH="mesa-21.1"
 
 if [[ ${PV} = 9999* ]]; then
 	GIT_ECLASS="git-2"
@@ -51,7 +51,8 @@ done
 
 IUSE="${IUSE_VIDEO_CARDS}
 	+classic debug dri drm egl +gallium -gbm gles1 gles2 kernel_FreeBSD
-	kvm_guest llvm +nptl pic selinux shared-glapi vulkan wayland xlib-glx X"
+	kvm_guest llvm +nptl pic selinux shared-glapi vulkan wayland xlib-glx X
+	libglvnd"
 
 LIBDRM_DEPSTRING=">=x11-libs/libdrm-2.4.60"
 
@@ -61,6 +62,8 @@ REQUIRED_USE="video_cards_amdgpu? ( llvm )
 # keep correct libdrm and dri2proto dep
 # keep blocks in rdepend for binpkg
 RDEPEND="
+	libglvnd? ( media-libs/libglvnd )
+	!libglvnd? ( !media-libs/libglvnd )
 	X? (
 		!<x11-base/xorg-server-1.7
 		>=x11-libs/libX11-1.3.99.901
@@ -99,10 +102,6 @@ src_prepare() {
 			-e "s/-DHAVE_POSIX_MEMALIGN//" \
 			configure.ac || die
 	fi
-  if use video_cards_vmware; then
-    eapply ${FILESDIR}/svga_format_v20.patch
-    eapply ${FILESDIR}/angle_draw.patch
-  fi
 	default
 }
 
@@ -113,7 +112,7 @@ src_configure() {
 	# For llvmpipe on ARM we'll get errors about being unable to resolve
 	# "__aeabi_unwind_cpp_pr1" if we don't include this flag; seems wise
 	# to include it for all platforms though.
-	use video_cards_llvmpipe && append-flags "-rtlib=libgcc -shared-libgcc"
+	use video_cards_llvmpipe && append-flags "-rtlib=libgcc -shared-libgcc --unwindlib=libgcc"
 
 	if use !gallium && use !classic && use !vulkan; then
 		ewarn "You enabled neither classic, gallium, nor vulkan "
@@ -142,7 +141,6 @@ src_configure() {
 		gallium_enable video_cards_freedreno freedreno
 
 		gallium_enable video_cards_virgl virgl
-    gallium_enable video_cards_vmware svga
 	fi
 
 	if use vulkan; then
@@ -180,9 +178,12 @@ src_configure() {
 	fi
 
 	emesonargs+=(
+		-Dexecmem=false
+		-Dglvnd=$(usex libglvnd true false)
 		-Dglx="${glx}"
 		-Dllvm="${LLVM_ENABLE}"
 		-Dplatforms="${egl_platforms}"
+		-Dprefer-iris=false
 		-Dshader-cache-default=false
 		$(meson_feature egl)
 		$(meson_feature gbm)
@@ -208,7 +209,7 @@ src_install() {
 	insinto "/usr/$(get_libdir)/dri/"
 	insopts -m0755
 	# install the gallium drivers we use
-	local gallium_drivers_files=( nouveau_dri.so r300_dri.so r600_dri.so msm_dri.so swrast_dri.so vmwgfx_dri.so )
+	local gallium_drivers_files=( nouveau_dri.so r300_dri.so r600_dri.so msm_dri.so swrast_dri.so )
 	for x in ${gallium_drivers_files[@]}; do
 		if [ -f "${S}/$(get_libdir)/gallium/${x}" ]; then
 			doins "${S}/$(get_libdir)/gallium/${x}"
