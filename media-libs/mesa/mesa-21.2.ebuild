@@ -256,5 +256,5 @@ vulkan_enable() {
 
 PATCHES=(
   "${FILESDIR}/svga_format_v20.patch"
-  "${FILESDIR}/angle_draw.patch"
 )
+ # "${FILESDIR}/angle_draw.patch"

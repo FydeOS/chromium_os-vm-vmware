@@ -1,14 +1,40 @@
-diff --git a/ui/ozone/platform/drm/common/drm_util.cc b/ui/ozone/platform/drm/common/drm_util.cc
-index ba795076da78f..e78038a424292 100644
---- a/ui/ozone/platform/drm/common/drm_util.cc
-+++ b/ui/ozone/platform/drm/common/drm_util.cc
-@@ -124,8 +124,8 @@ display::DisplayConnectionType GetDisplayType(drmModeConnector* connector) {
-     case DRM_MODE_CONNECTOR_DVII:
-     case DRM_MODE_CONNECTOR_DVID:
+From 69b0b0ca929527ff79eaf26054770c828559f0cb Mon Sep 17 00:00:00 2001
+From: yang <yang@fydeos.io>
+Date: Tue, 2 Feb 2021 18:25:14 +0800
+Subject: [PATCH 05/51] enable modify display resolution in virtual machine
+
+---
+ ui/ozone/platform/drm/common/drm_util.cc | 1 +
+ 1 file changed, 1 insertion(+)
+
+Index: src/ui/ozone/platform/drm/common/drm_util.cc
+===================================================================
+--- src.orig/ui/ozone/platform/drm/common/drm_util.cc
++++ src/ui/ozone/platform/drm/common/drm_util.cc
+@@ -126,6 +126,7 @@ display::DisplayConnectionType GetDispla
      case DRM_MODE_CONNECTOR_DVIA:
--      return display::DISPLAY_CONNECTION_TYPE_DVI;
+       return display::DISPLAY_CONNECTION_TYPE_DVI;
      case DRM_MODE_CONNECTOR_VIRTUAL:
-+      return display::DISPLAY_CONNECTION_TYPE_DVI;
++      return display::DISPLAY_CONNECTION_TYPE_UNKNOWN;
        // A display on VM is treated as an internal display.
      case DRM_MODE_CONNECTOR_LVDS:
      case DRM_MODE_CONNECTOR_eDP:
+Index: src/gpu/command_buffer/service/feature_info.cc
+===================================================================
+--- src.orig/gpu/command_buffer/service/feature_info.cc
++++ src/gpu/command_buffer/service/feature_info.cc
+@@ -492,11 +492,13 @@ void FeatureInfo::InitializeFeatures() {
+ 
+   // Really it's part of core OpenGL 2.1 and up, but let's assume the
+   // extension is still advertised.
++  /*
+   bool has_pixel_buffers =
+       gl_version_info_->is_es3 || gl_version_info_->is_desktop_core_profile ||
+       gfx::HasExtension(extensions, "GL_ARB_pixel_buffer_object") ||
+       gfx::HasExtension(extensions, "GL_NV_pixel_buffer_object");
+-
++  */
++  bool has_pixel_buffers = false;
+   // If ES3 or pixel buffer objects are enabled by the driver, we have to assume
+   // the unpack buffer binding may be changed on the underlying context. This is
+   // true whether or not this particular decoder exposes PBOs, as it could be
